@@ -1,14 +1,14 @@
 project_name: 'SFTMD'
-experiment_name: 'SFTMD-0317-pca65-test' # TODO: may be updated
+experiment_name: 'SFTMD-0922-same-depth-exp-CCPs' # TODO: may be updated
 
 training:
   max_epochs: 10000
-  validation_freq: 500 # TODO: may be updated
-  checkpoint_freq: 2000 # TODO: may be updated
-  wandb_id: 'iikiu66y09' # TODO: may be updated
+  validation_freq: 2000 # TODO: may be updated
+  checkpoint_freq: 4000 # TODO: may be updated
+  wandb_id: '2asgusdfg' # TODO: may be updated
 
 model:
-  name: 'F_Model'
+  name: 'SFTDFCAN'
   gpu: True
   is_data_parallel: False
   pca_mean: './data/pca_matrices_zernike/pca_mean.pth' # TODO: may be updated
@@ -17,7 +17,7 @@ model:
   norm_hr: True # TODO: may be updated
 #  norm_k: True # TODO: may be updated
   network:
-    name: 'SFTMD'
+    name: 'SFTDFCAN'
     in_nc: 1
     out_nc: 1
     nf: 64
@@ -40,7 +40,7 @@ model:
   loss_function:
     name: 'L1'  # ~ for no loss_function
   checkpoint:
-    network: './experiments/SFTMD-0130-pca65/54000_network.pth'
+    network: #'./experiments/SFTMD-0130-pca65/54000_network.pth'
     training_state: ~
 
 train_data:
@@ -51,7 +51,7 @@ train_data:
   repeat: ~ # TODO: may be updated
   img_filter:
     img_root: '../BioDataset/Mixed'
-    structure_selected: [4] #1 CCPs 2 ER 3 MTs 4 F-actin
+    structure_selected: [1] #1 CCPs 2 ER 3 MTs 4 F-actin
     included_idx: [11, 100]
   hr_crop:
     mode: 'random' # TODO: may be updated
@@ -59,7 +59,7 @@ train_data:
     scan_shape: [-1, -1]
     hr_size: [128, 128] # TODO: may be updated
   scale: 2 # TODO: may be updated
-  img_signal: [100, 1000]
+  img_signal: [120, 400]
   psf_settings:
     type: 'Zernike' # Gaussian | Zernike TODO: may be updated
     kernel_size: 33
@@ -82,7 +82,7 @@ train_data:
       num_idx: [1,1]
       mode: 'uniform'
       std: 0.125
-      bound: 0.4
+      bound: [0.3, 0.4]
   sup_phaseZ: 'all'  # all | [begin, end]
   padding:
     mode: 'circular'  # constant | reflect | replicate | circular
@@ -102,7 +102,7 @@ test_data:
   repeat: ~ # TODO: may be updated
   img_filter:
     img_root: '../BioDataset/Mixed'
-    structure_selected: [4]
+    structure_selected: [2]
     included_idx: [1, 10]
   hr_crop:
     mode: 'random' # TODO: may be updated
@@ -110,7 +110,7 @@ test_data:
     scan_shape: [-1, -1]
     hr_size: [128, 128] # TODO: may be updated
   scale: 2 # TODO: may be updated
-  img_signal: [1000]
+  img_signal: [120,400]
   psf_settings:
     type: 'Zernike' # Gaussian | Zernike TODO: may be updated
     kernel_size: 33
@@ -133,7 +133,7 @@ test_data:
       num_idx: [1,1]
       mode: 'uniform'
       std: 0.125
-      bound: 0.4
+      bound: [0.3, 0.4]
   sup_phaseZ: 'all'  # all | [begin, end]
   padding:
     mode: 'circular'  # constant | reflect | replicate | circular

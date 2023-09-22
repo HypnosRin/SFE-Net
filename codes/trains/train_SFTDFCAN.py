@@ -12,7 +12,7 @@ from utils.universal_util import read_yaml, save_yaml, calculate_PSNR
 def train(opt):
     # pass parameter
     project_name = opt['project_name']
-    experiment_path = os.path.join('./experiments', opt['experiment_name'])
+    experiment_path = os.path.join('/data_2/PsfPred/experiments', opt['experiment_name'])
     max_epochs = opt['training']['max_epochs']
     validation_freq = opt['training']['validation_freq']
     checkpoint_freq = opt['training']['checkpoint_freq']
