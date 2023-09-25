@@ -1,8 +1,8 @@
-project_name: 'SFTMD'
-experiment_name: 'SFTMD-0922-same-depth-exp-CCPs' # TODO: may be updated
+project_name: 'SFTDFCAN'
+experiment_name: 'SFTDFCAN-0922-same-depth-exp-CCPs' # TODO: may be updated
 
 training:
-  max_epochs: 10000
+  max_epochs: 100000
   validation_freq: 2000 # TODO: may be updated
   checkpoint_freq: 4000 # TODO: may be updated
   wandb_id: '2asgusdfg' # TODO: may be updated
@@ -40,8 +40,8 @@ model:
   loss_function:
     name: 'L1'  # ~ for no loss_function
   checkpoint:
-    network: #'./experiments/SFTMD-0130-pca65/54000_network.pth'
-    training_state: ~
+    network: /data_2/PsfPred/experiments/SFTDFCAN-0829-same-depth/230000_network.pth
+    training_state: /data_2/PsfPred/experiments/SFTDFCAN-0829-same-depth/230000_training_state.pth
 
 train_data:
   name: 'HrLrKernelFromBioSR'
@@ -102,7 +102,7 @@ test_data:
   repeat: ~ # TODO: may be updated
   img_filter:
     img_root: '../BioDataset/Mixed'
-    structure_selected: [2]
+    structure_selected: [1]
     included_idx: [1, 10]
   hr_crop:
     mode: 'random' # TODO: may be updated

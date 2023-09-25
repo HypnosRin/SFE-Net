@@ -68,31 +68,32 @@ def test(opt):
                 sr /= rt
 
                 # TODO 1 save all pred kernels 2 save averaged pred kernels
-                # pred_kernels.append(pred_kernel.detach().cpu().numpy())
-                pred_kernels.append(np.mean(np.array([p.detach().cpu().squeeze().numpy() for p in pred_kernel]),axis=0))
+
+                # pred_kernels.append(np.mean(np.array([p.detach().cpu().squeeze().numpy() for p in pred_kernel]),axis=0))
                 pred_kernel = concat(pred_kernel, int(len(positions) ** 0.5), int(len(positions) ** 0.5))
+                pred_kernels.append(pred_kernel.detach().cpu().numpy())
 
                 names.append(name)
 
-                # result_sr = normalization(sr).squeeze(0).squeeze(0)
-                # result_kernel = normalization(pred_kernel).squeeze(0).squeeze(0)
-                # result_all = overlap(result_kernel, result_sr, (0, 0))
-                # result_sr = transforms.ToPILImage()((result_sr * 65535).to(torch.int32))
-                # result_kernel = transforms.ToPILImage()((result_kernel * 65535).to(torch.int32))
-                # result_all = transforms.ToPILImage()((result_all * 65535).to(torch.int32))
-                #
-                # if save_img['sr']:
-                #     result_sr.save(os.path.join(save_dir, name))
-                # if save_img['kernel']:
-                #     result_kernel.save(os.path.join(save_dir, name.replace('.png', '_k.png')))
-                # if save_img['sr_kernel']:
-                #     result_all.save(os.path.join(save_dir, name.replace('.png', '_sr-k.png')))
+                result_sr = normalization(sr).squeeze(0).squeeze(0)
+                result_kernel = normalization(pred_kernel).squeeze(0).squeeze(0)
+                result_all = overlap(result_kernel, result_sr, (0, 0))
+                result_sr = transforms.ToPILImage()((result_sr * 65535).to(torch.int32))
+                result_kernel = transforms.ToPILImage()((result_kernel * 65535).to(torch.int32))
+                result_all = transforms.ToPILImage()((result_all * 65535).to(torch.int32))
+
+                if save_img['sr']:
+                    result_sr.save(os.path.join(save_dir, name))
+                if save_img['kernel']:
+                    result_kernel.save(os.path.join(save_dir, name.replace('.png', '_k.png')))
+                if save_img['sr_kernel']:
+                    result_all.save(os.path.join(save_dir, name.replace('.png', '_sr-k.png')))
                 pbar.update(1)
 
 
-    # if save_mat:
-        # savemat(os.path.join(save_dir, 'results.mat'), {'UNetBased_pred_kernels': pred_kernels,
-        #                                                 'names': names})
+    if save_mat:
+        savemat(os.path.join(save_dir, 'results.mat'), {'UNetBased_pred_kernels': pred_kernels,
+                                                        'names': names})
 
 
 def main():
