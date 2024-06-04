@@ -1,0 +1,14 @@
+kernel_size: 33
+NA: 1.35
+Lambda: 0.525
+RefractiveIndex: 1.33
+SigmaX: 2.0
+SigmaY: 2.0
+Pixelsize: 0.0313
+nMed: 1.33
+phaseZ:
+    idx_start: 4
+    num_idx: 15
+    mode: 'gaussian'
+    std: 0.125
+    bound: 1.0

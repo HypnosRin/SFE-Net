@@ -1,0 +1,146 @@
+project_name: 'SFTMD'
+experiment_name: 'SFTMD-0317-pca65-test' # TODO: may be updated
+
+training:
+  max_epochs: 10000
+  validation_freq: 500 # TODO: may be updated
+  checkpoint_freq: 2000 # TODO: may be updated
+  wandb_id: 'iikiu66y09' # TODO: may be updated
+
+model:
+  name: 'F_Model'
+  gpu: True
+  is_data_parallel: False
+  pca_mean: './data/pca_matrices_zernike/pca_mean.pth' # TODO: may be updated
+  pca_matrix: './data/pca_matrices_zernike/pca_matrix65.pth' # TODO: may be updated
+  norm_lr: True # TODO: may be updated
+  norm_hr: True # TODO: may be updated
+#  norm_k: True # TODO: may be updated
+  network:
+    name: 'SFTMD'
+    in_nc: 1
+    out_nc: 1
+    nf: 64
+    nb: 16
+    scale: 2
+    input_para: 65
+    min: 0.0
+    max: 1.0
+    init: ['orthogonal', 0.2, 'uniform'] # ~ for no init
+  optimizer:
+    name: 'Adam'  # ~ for no optimizer
+    lr: 1e-4
+    weight_decay: 0.0
+  scheduler:
+    name: 'CosineAnnealingLR_Restart'  # ~ for no scheduler
+    T_period: [12500, 12500, 12500, 12500]
+    restarts: [12500, 25000, 37500]
+    weights: [1, 1, 1]
+    eta_min: 1e-7
+  loss_function:
+    name: 'L1'  # ~ for no loss_function
+  checkpoint:
+    network: './experiments/SFTMD-0130-pca65/54000_network.pth'
+    training_state: ~
+
+train_data:
+  name: 'HrLrKernelFromBioSR'
+  is_train: True
+  preload_data: ~
+  gpu_id: ~
+  repeat: ~ # TODO: may be updated
+  img_filter:
+    img_root: '../BioDataset/Mixed'
+    structure_selected: [4] #1 CCPs 2 ER 3 MTs 4 F-actin
+    included_idx: [11, 100]
+  hr_crop:
+    mode: 'random' # TODO: may be updated
+    center_pos: [-1, -1]
+    scan_shape: [-1, -1]
+    hr_size: [128, 128] # TODO: may be updated
+  scale: 2 # TODO: may be updated
+  img_signal: [100, 1000]
+  psf_settings:
+    type: 'Zernike' # Gaussian | Zernike TODO: may be updated
+    kernel_size: 33
+
+    sigma: 2.6
+    sigma_min: 0.2
+    sigma_max: 4.0
+    prob_isotropic: 0.0
+    scale: 2
+
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+      idx_start: [3,8]
+      num_idx: [1,1]
+      mode: 'uniform'
+      std: 0.125
+      bound: 0.4
+  sup_phaseZ: 'all'  # all | [begin, end]
+  padding:
+    mode: 'circular'  # constant | reflect | replicate | circular
+    value: -1  # for constant mode
+  loader_settings:
+    batch_size: 8 # TODO: may be updated
+    shuffle: True
+    num_workers: 4
+    pin_memory: False
+    drop_last: True
+
+test_data:
+  name: 'HrLrKernelFromBioSR'
+  is_train: False
+  preload_data: # './data/test_loaders/zernike-40item.mat' # TODO: may be updated
+  gpu_id: ~
+  repeat: ~ # TODO: may be updated
+  img_filter:
+    img_root: '../BioDataset/Mixed'
+    structure_selected: [4]
+    included_idx: [1, 10]
+  hr_crop:
+    mode: 'random' # TODO: may be updated
+    center_pos: [-1, -1]
+    scan_shape: [-1, -1]
+    hr_size: [128, 128] # TODO: may be updated
+  scale: 2 # TODO: may be updated
+  img_signal: [1000]
+  psf_settings:
+    type: 'Zernike' # Gaussian | Zernike TODO: may be updated
+    kernel_size: 33
+
+    sigma: 2.6
+    sigma_min: 0.2
+    sigma_max: 4.0
+    prob_isotropic: 0.0
+    scale: 2
+
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+      idx_start: [3,8]
+      num_idx: [1,1]
+      mode: 'uniform'
+      std: 0.125
+      bound: 0.4
+  sup_phaseZ: 'all'  # all | [begin, end]
+  padding:
+    mode: 'circular'  # constant | reflect | replicate | circular
+    value: -1  # for constant mode
+  loader_settings:
+    batch_size: 1
+    shuffle: False
+    num_workers: 0
+    pin_memory: False
+    drop_last: False

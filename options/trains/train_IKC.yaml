@@ -1,0 +1,198 @@
+project_name: 'IKC'
+experiment_name: 'IKC-0614-4-18-poly' # TODO: may be updated
+
+training:
+  max_epochs: 10000
+  correct_step: 7
+  validation_freq: 500 # TODO: may be updated
+  checkpoint_freq: 1000 # TODO: may be updated
+  wandb_id: '534g6djt4' # TODO: may be updated
+
+F_model:
+  name: 'SFTDFCAN'
+  gpu: True
+  is_data_parallel: False
+  pca_mean: './data/pca_matrices_zernike/pca_mean.pth'
+  pca_matrix: './data/pca_matrices_zernike/pca_matrix65.pth'
+  norm_lr: False
+  norm_hr: False
+  network:
+    name: 'SFTDFCAN'
+    in_nc: 1
+    out_nc: 1
+    nf: 64
+    nb: 16
+    scale: 2
+    input_para: 65
+    min: 0.0
+    max: 1.0
+    init: ~
+  optimizer:
+    name: ~
+  scheduler:
+    name: ~
+  loss_function:
+    name: 'MSE'
+  checkpoint:
+    network: './experiments/SFTDFCAN-0829-same-depth/900000_network.pth'
+    training_state: ~
+
+P_model:
+  name: 'P_Model'
+  gpu: True
+  is_data_parallel: False
+  norm_lr: False
+  pca_mean: './data/pca_matrices_zernike/pca_mean.pth' #
+  pca_matrix: './data/pca_matrices_zernike/pca_matrix65.pth'
+  network:
+    name: 'Predictor'
+    in_nc: 1
+    nf: 64
+    code_len: 65
+    use_bias: True
+    init: ['orthogonal', 0.2, 'uniform']
+  optimizer:
+    name: 'Adam'
+    lr: 1e-4
+    weight_decay: 0.0
+  scheduler:
+    name: 'ReduceLROnPlateau'
+    factor: 0.5
+    patience: 2
+    min_lr: 1e-8
+    step_interval: 100
+  loss_function:
+    name: 'MSE'
+  checkpoint:
+    network: ~
+    training_state: ~
+
+C_model:
+  name: 'C_Model'
+  gpu: True
+  is_data_parallel: False
+  norm_sr: False #
+  network:
+    name: 'Corrector'
+    in_nc: 1
+    nf: 64
+    code_len: 65
+    use_bias: True
+    init: ['orthogonal', 0.2, 'uniform']
+  optimizer:
+    name: 'Adam'
+    lr: 1e-4
+    weight_decay: 0.0
+  scheduler:
+    name: 'ReduceLROnPlateau'
+    factor: 0.5
+    patience: 2
+    min_lr: 1e-8
+    step_interval: 100
+  loss_function:
+    name: 'MSE'
+  checkpoint:
+    network: ~
+    training_state: ~
+
+train_data:
+  name: 'HrLrKernelFromBioSR'
+  is_train: True
+  preload_data: ~
+  gpu_id: ~
+  repeat: ~ #
+  img_filter:
+    img_root: './BioDataset/Mixed'
+    structure_selected: [1, 2, 3, 4]
+    included_idx: [11, 100]
+  hr_crop:
+    mode: 'random' #
+    center_pos: [-1, -1]
+    scan_shape: [-1, -1]
+    hr_size: [128, 128]
+  scale: 2
+  img_signal: [100, 1000]
+  psf_settings:
+    type: 'Zernike' # Gaussian | Zernike
+    kernel_size: 33
+
+    sigma: 2.6
+    sigma_min: 0.2
+    sigma_max: 4.0
+    prob_isotropic: 0.0
+    scale: 2
+
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+      idx_start: [4]
+      num_idx: [15] # TODO: may be updated
+      mode: 'gaussian'
+      std: 0.125
+      bound: [1.0]
+  sup_phaseZ: 'all'  # all | [begin, end]
+  padding:
+      mode: 'circular'  # constant | reflect | replicate | circular
+      value: -1  # for constant mode
+  loader_settings:
+    batch_size: 8
+    shuffle: True
+    num_workers: 4
+    pin_memory: False
+    drop_last: True
+
+test_data:
+  name: 'HrLrKernelFromBioSR'
+  is_train: False
+  preload_data: # './data/test_loaders/zernike-40item.mat'
+  gpu_id: ~
+  repeat: ~
+  img_filter:
+    img_root: './BioDataset/Mixed'
+    structure_selected: [1, 2, 3, 4]
+    included_idx: [1, 10]
+  hr_crop:
+    mode: 'random'
+    center_pos: [-1, -1]
+    scan_shape: [-1, -1]
+    hr_size: [128, 128]
+  scale: 2
+  img_signal: [1000]
+  psf_settings:
+    type: 'Zernike' # Gaussian | Zernike
+    kernel_size: 33
+
+    sigma: 2.6
+    sigma_min: 0.2
+    sigma_max: 4.0
+    prob_isotropic: 0.0
+    scale: 2
+
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+      idx_start: [4]
+      num_idx: [15] # TODO: may be updated
+      mode: 'gaussian'
+      std: 0.125
+      bound: [1.0]
+  sup_phaseZ: 'all'  # all | [begin, end]
+  padding:
+      mode: 'circular'  # constant | reflect | replicate | circular
+      value: -1  # for constant mode
+  loader_settings:
+    batch_size: 1
+    shuffle: False
+    num_workers: 0
+    pin_memory: False
+    drop_last: False

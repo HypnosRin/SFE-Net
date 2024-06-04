@@ -1,0 +1,84 @@
+testing:
+  save_img: True # TODO: may be updated
+  save_mat: True # TODO: may be updated
+  save_dir: './results/SFTMD-CCPs-exp-u0.4-norm' # TODO: may be updated
+
+model:
+  name: 'F_Model'
+  gpu: True
+  is_data_parallel: False
+  pca_mean: './data/pca_matrices_zernike/pca_mean.pth' # TODO: may be updated
+  pca_matrix: './data/pca_matrices_zernike/pca_matrix65.pth' # TODO: may be updated
+  norm_lr: True # TODO: may be updated
+  norm_hr: True # TODO: may be updated
+  network:
+    name: 'SFTMD'
+    in_nc: 1
+    out_nc: 1
+    nf: 64
+    nb: 16
+    scale: 2
+    input_para: 65
+    min: 0.0
+    max: 1.0
+    init: ~
+  optimizer:
+    name: ~
+  scheduler:
+    name: ~
+  loss_function:
+    name: ~
+  checkpoint:
+    network: './experiments/SFTMD-0614-pca65-CCPs-u0.4-norm/10000_network.pth' # TODO: may be updated
+    training_state: ~
+
+test_data:
+  name: 'HrLrKernelFromBioSR'
+  is_train: False
+  preload_data: './data/test_loaders/zernike-3s-8s-zernike-u0.4-CCPs.mat' # TODO: may be updated
+  gpu_id: ~
+  repeat: 3 # TODO: may be updated
+  img_filter:
+    img_root: '../BioDataset/Mixed'
+    structure_selected: [3] #1 CCPs 2 ER 3 MTs 4 F-actin
+    included_idx: [1, 10]
+  hr_crop:
+    mode: 'random'  # ~ for no aug # TODO: may be updated
+    center_pos: [-1, -1]
+    scan_shape: [-1, -1]
+    hr_size: [512, 512] # TODO: may be updated
+  scale: 2 # TODO: may be updated
+  img_signal: [1000]
+  psf_settings:
+    type: 'Zernike' # Gaussian | Zernike TODO: may be updated
+    kernel_size: 33
+
+    sigma: 2.6
+    sigma_min: 0.2
+    sigma_max: 4.0
+    prob_isotropic: 0.0
+    scale: 2
+
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+      idx_start: [3,8]
+      num_idx: [1,1]
+      mode: 'uniform'
+      std: 0.125
+      bound: 0.4
+  sup_phaseZ: 'all'  # all | [begin, end]
+  padding:
+      mode: 'circular'  # constant | reflect | replicate | circular
+      value: -1  # for constant mode
+  loader_settings:
+    batch_size: 1
+    shuffle: False
+    num_workers: 0
+    pin_memory: False
+    drop_last: False

@@ -1,0 +1,141 @@
+project_name: 'MANet'
+experiment_name: 'MANet-0609-4-18-poly' # TODO: may be updated
+
+training:
+  max_epochs: 10000
+  validation_freq: 4000 # TODO: may be updated
+  checkpoint_freq: 4000 # TODO: may be updated
+  wandb_id: 'ef54684' # TODO: may be updated
+
+model:
+  name: 'MANet'
+  gpu: True
+  is_data_parallel: False
+  times_1e4: False #
+  norm_lr: False #
+  network:
+    name: 'MANet_s1'
+    in_nc: 1
+    scale: 2
+    kernel_size: 33
+    manet_nf: 128
+    manet_nb: 1
+    split: 2
+    init: ['uniform', 0.2, 'uniform']
+  optimizer:
+    name: 'Adam'
+    lr: 2e-4
+    weight_decay: 1e-8
+  scheduler:
+    name: 'ReduceLROnPlateau'
+    factor: 0.5
+    patience: 2
+    min_lr: 1e-6
+    step_interval: 4000
+  loss_function:
+    name: 'L1'
+  checkpoint:
+    network: ~
+    training_state: ~
+
+train_data:
+  name: 'HrLrKernelFromBioSR'
+  is_train: True
+  preload_data: ~
+  gpu_id: ~
+  repeat: ~
+  img_filter:
+    img_root: './BioDataset/Mixed'
+    structure_selected: [1, 2, 3, 4]
+    included_idx: [11, 100]
+  hr_crop:
+    mode: 'random'
+    center_pos: [-1, -1]
+    scan_shape: [-1, -1]
+    hr_size: [128, 128]
+  scale: 2
+  img_signal: [100, 1000]
+  psf_settings:
+    type: 'Zernike' # Gaussian | Zernike
+    kernel_size: 33
+
+    sigma: 2.6
+    sigma_min: 0.2
+    sigma_max: 4.0
+    prob_isotropic: 0.0
+    scale: 2
+
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+        idx_start: [4] # Zernike
+        num_idx: [15] # TODO: may be updated
+        mode: 'gaussian'
+        std: 0.125
+        bound: [1.0]
+  sup_phaseZ: 'all'  # all | [begin, end]
+  padding:
+      mode: 'circular'  # constant | reflect | replicate | circular
+      value: -1  # for constant mode
+  loader_settings:
+    batch_size: 4
+    shuffle: True
+    num_workers: 4
+    pin_memory: False
+    drop_last: True
+
+test_data:
+  name: 'HrLrKernelFromBioSR'
+  is_train: False
+  preload_data: # './data/test_loaders/zernike-40item.mat'
+  gpu_id: ~
+  repeat: ~
+  img_filter:
+    img_root: './BioDataset/Mixed'
+    structure_selected: [1, 2, 3, 4]
+    included_idx: [1, 10]
+  hr_crop:
+    mode: 'random'
+    center_pos: [-1, -1]
+    scan_shape: [-1, -1]
+    hr_size: [128, 128]
+  scale: 2
+  img_signal: [10000]
+  psf_settings:
+    type: 'Zernike' # Gaussian | Zernike
+    kernel_size: 33
+
+    sigma: 2.6
+    sigma_min: 0.2
+    sigma_max: 4.0
+    prob_isotropic: 0.0
+    scale: 2
+
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+        idx_start: [4] # Zernike
+        num_idx: [15] # TODO: may be updated
+        mode: 'gaussian'
+        std: 0.125
+        bound: [1.0]
+  sup_phaseZ: 'all'  # all | [begin, end]
+  padding:
+      mode: 'circular'  # constant | reflect | replicate | circular
+      value: -1  # for constant mode
+  loader_settings:
+    batch_size: 1
+    shuffle: False
+    num_workers: 0
+    pin_memory: False
+    drop_last: False
