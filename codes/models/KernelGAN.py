@@ -1,0 +1,220 @@
+import torch
+import torch.nn.functional as F
+import numpy as np
+
+from utils.KernelGAN_util import save_final_kernel, run_zssr, post_process_k
+from loss_functions.KernelGAN_loss import GANLoss, SparsityLoss, BoundariesLoss, CentralizedLoss, SumOfWeightsLoss, \
+    DownScaleLoss
+from networks import init_weights
+from networks.KernelGAN import Generator, Discriminator
+
+
+class KernelGAN(object):
+    # Constraint co-efficients
+    lambda_sum2one = 0.5
+    lambda_bicubic = 5
+    lambda_boundaries = 0.5
+    lambda_centralized = 0
+    lambda_sparse = 0
+
+    def __init__(self, opt):
+        # Acquire configuration
+        self.opt = opt
+
+        # Define the GAN
+        self.G = Generator(opt).cuda()
+        self.D = Discriminator(opt).cuda()
+        init_weights(self.G, 'xavier_normal', 0.1, 'normal')
+        init_weights(self.D, 'xavier_normal', 0.1, 'normal')
+
+        # Calculate D's input & output shape according to the shaving done by the networks
+        self.d_input_shape = self.G.output_size
+        self.d_output_shape = self.d_input_shape - self.D.forward_shave
+
+        # Input tensors
+        self.g_input = torch.FloatTensor(1, 3, opt['input_crop_size'], opt['input_crop_size']).cuda()
+        self.d_input = torch.FloatTensor(1, 3, self.d_input_shape, self.d_input_shape).cuda()
+
+        # The kernel G is imitating
+        self.curr_k = torch.FloatTensor(opt['G_kernel_size'], opt['G_kernel_size']).cuda()
+
+        # Losses
+        self.GAN_loss_layer = GANLoss(d_last_layer_size=self.d_output_shape).cuda()
+        self.bicubic_loss = DownScaleLoss(scale_factor=opt['scale_factor']).cuda()
+        self.sum2one_loss = SumOfWeightsLoss().cuda()
+        self.boundaries_loss = BoundariesLoss(k_size=opt['G_kernel_size']).cuda()
+        self.centralized_loss = CentralizedLoss(k_size=opt['G_kernel_size'],
+                                                               scale_factor=opt['scale_factor']).cuda()
+        self.sparse_loss = SparsityLoss().cuda()
+        self.loss_bicubic = 0
+
+        # Define loss function
+        self.criterionGAN = self.GAN_loss_layer.forward
+
+        # Optimizers
+        self.optimizer_G = torch.optim.Adam(self.G.parameters(), lr=opt['g_lr'], betas=(opt['beta1'], 0.999))
+        self.optimizer_D = torch.optim.Adam(self.D.parameters(), lr=opt['d_lr'], betas=(opt['beta1'], 0.999))
+
+        print('*' * 60 + '\nSTARTED KernelGAN on: \"%s\"...' % opt['input_image_path'])
+
+    # noinspection PyUnboundLocalVariable
+    def calc_curr_k(self):
+        """given a generator network, the function calculates the kernel it is imitating"""
+        delta = torch.Tensor([1.]).unsqueeze(0).unsqueeze(-1).unsqueeze(-1).cuda()
+        for ind, w in enumerate(self.G.parameters()):
+            curr_k = F.conv2d(delta, w, padding=self.opt['G_kernel_size'] - 1) if ind == 0 else F.conv2d(curr_k, w)
+        self.curr_k = curr_k.squeeze().flip([0, 1])
+
+    def train(self, g_input, d_input):
+        self.set_input(g_input, d_input)
+        self.train_g()
+        self.train_d()
+
+    def set_input(self, g_input, d_input):
+        self.g_input = g_input.contiguous()
+        self.d_input = d_input.contiguous()
+
+    def train_g(self):
+        # Zeroize gradients
+        self.optimizer_G.zero_grad()
+        # Generator forward pass
+        g_pred = self.G.forward(self.g_input)
+        # Pass Generators output through Discriminator
+        d_pred_fake = self.D.forward(g_pred)
+        # Calculate generator loss, based on discriminator prediction on generator result
+        loss_g = self.criterionGAN(d_last_layer=d_pred_fake, is_d_input_real=True)
+        # Sum all losses
+        total_loss_g = loss_g + self.calc_constraints(g_pred)
+        # Calculate gradients
+        total_loss_g.backward()
+        # Update weights
+        self.optimizer_G.step()
+
+    def calc_constraints(self, g_pred):
+        # Calculate K which is equivalent to G
+        self.calc_curr_k()
+        # Calculate constraints
+        self.loss_bicubic = self.bicubic_loss.forward(g_input=self.g_input, g_output=g_pred)
+        loss_boundaries = self.boundaries_loss.forward(kernel=self.curr_k)
+        loss_sum2one = self.sum2one_loss.forward(kernel=self.curr_k)
+        loss_centralized = self.centralized_loss.forward(kernel=self.curr_k)
+        loss_sparse = self.sparse_loss.forward(kernel=self.curr_k)
+        # Apply constraints co-efficients
+        return self.loss_bicubic * self.lambda_bicubic + loss_sum2one * self.lambda_sum2one + \
+            loss_boundaries * self.lambda_boundaries + loss_centralized * self.lambda_centralized + \
+            loss_sparse * self.lambda_sparse
+
+    def train_d(self):
+        # Zeroize gradients
+        self.optimizer_D.zero_grad()
+        # Discriminator forward pass over real example
+        d_pred_real = self.D.forward(self.d_input)
+        # Discriminator forward pass over fake example (generated by generator)
+        # Note that generator result is detached so that gradients are not propagating back through generator
+        g_output = self.G.forward(self.g_input)
+        d_pred_fake = self.D.forward((g_output + torch.randn_like(g_output) / 255.).detach())
+        # Calculate discriminator loss
+        loss_d_fake = self.criterionGAN(d_pred_fake, is_d_input_real=False)
+        loss_d_real = self.criterionGAN(d_pred_real, is_d_input_real=True)
+        loss_d = (loss_d_fake + loss_d_real) * 0.5
+        # Calculate gradients, note that gradients are not propagating back through generator
+        loss_d.backward()
+        # Update weights, note that only discriminator weights are updated (by definition of the D optimizer)
+        self.optimizer_D.step()
+
+    def finish(self):
+        no_shift_kernel, final_kernel = post_process_k(self.curr_k, n=self.opt['n_filtering'])
+        # save_final_kernel(final_kernel, self.opt)
+        # save_final_kernel(no_shift_kernel, self.opt)
+        diff = (final_kernel.shape[0] - no_shift_kernel.shape[0],
+                final_kernel.shape[1] - no_shift_kernel.shape[1])
+        bound = (diff[0] // 2, final_kernel.shape[0] - (diff[0] - (diff[0] // 2)),
+                 diff[1] // 2, final_kernel.shape[1] - (diff[1] - (diff[1] // 2)))
+        final_correct_kernel = final_kernel[bound[0]:bound[1], bound[2]:bound[3]]
+        final_correct_kernel = np.clip(final_correct_kernel, 0.0, 1.0)
+        final_correct_kernel /= np.sum(final_correct_kernel)
+        assert final_correct_kernel.shape == no_shift_kernel.shape
+        print('KernelGAN estimation complete!')
+        run_zssr(final_kernel, self.opt)
+        print('FINISHED RUN (see --%s-- folder)\n' % self.opt['output_dir_path'] + '*' * 60)
+        return final_correct_kernel
+
+
+class Learner(object):
+    # Default hyper-parameters
+    lambda_update_freq = 200
+    bic_loss_to_start_change = 0.4
+    lambda_bicubic_decay_rate = 100.
+    update_l_rate_freq = 750
+    update_l_rate_rate = 10.
+    lambda_sparse_end = 5
+    lambda_centralized_end = 1
+    lambda_bicubic_min = 5e-6
+
+    def __init__(self):
+        self.bic_loss_counter = 0
+        self.similar_to_bicubic = False  # Flag indicating when the bicubic similarity is achieved
+        self.insert_constraints = True  # Flag is switched to false once constraints are added to the loss
+
+    def update(self, iteration, gan):
+        if iteration == 0:
+            return
+        # Update learning rate every update_l_rate freq
+        if iteration % self.update_l_rate_freq == 0:
+            for params in gan.optimizer_G.param_groups:
+                params['lr'] /= self.update_l_rate_rate
+            for params in gan.optimizer_D.param_groups:
+                params['lr'] /= self.update_l_rate_rate
+
+        # Until similar to bicubic is satisfied, don't update any other lambdas
+        if not self.similar_to_bicubic:
+            if gan.loss_bicubic < self.bic_loss_to_start_change:
+                if self.bic_loss_counter >= 2:
+                    self.similar_to_bicubic = True
+                else:
+                    self.bic_loss_counter += 1
+            else:
+                self.bic_loss_counter = 0
+        # Once similar to bicubic is satisfied, consider inserting other constraints
+        elif iteration % self.lambda_update_freq == 0 and gan.lambda_bicubic > self.lambda_bicubic_min:
+            gan.lambda_bicubic = max(gan.lambda_bicubic / self.lambda_bicubic_decay_rate, self.lambda_bicubic_min)
+            if self.insert_constraints and gan.lambda_bicubic < 5e-3:
+                gan.lambda_centralized = self.lambda_centralized_end
+                gan.lambda_sparse = self.lambda_sparse_end
+                self.insert_constraints = False
+
+
+def main():
+    gan = KernelGAN(opt={'input_image_path': None,
+                         'img_name': None,
+                         'img_max_val': 65535.0,
+                         'noise_scale': 40,
+                         'output_dir_path': None,
+                         'real_image': False,
+                         'G_kernel_size': 33,
+                         'net_G': {'name': 'Generator',
+                                   'G_structure': (7, 7, 5, 5, 5, 3, 3, 3, 3, 1, 1, 1),
+                                   'G_chan': 64,
+                                   'scale_factor': 1.0,
+                                   'input_crop_size': 64,
+                                   'init': None},
+                         'net_D': {'name': 'Discriminator',
+                                   'img_channel': 3,
+                                   'D_chan': 64,
+                                   'D_kernel_size': 7,
+                                   'D_n_layers': 7,
+                                   'input_crop_size': 64,
+                                   'init': None},
+                         'gpu_id': 0,
+                         'max_iter': 3000,
+                         'n_filtering': 40,
+                         'X4': False,
+                         'beta1': 0.5,
+                         'g_lr': 0.0002,
+                         'd_lr': 0.0002,
+                         'do_ZSSR': False})
+    print(gan)
+
+
+if __name__ == '__main__':
+    main()

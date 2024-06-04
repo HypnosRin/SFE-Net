@@ -1,0 +1,62 @@
+#  preload_data: './data/test_loaders/zernike_4_6_polynomials.mat' # TODO: may be updated
+#  preload_data: './data/test_loaders/zernike_4_8_polynomials.mat' # TODO: may be updated
+#  preload_data: './data/test_loaders/zernike_4_13_polynomials.mat' # TODO: may be updated
+preload_data: './data/test_loaders/zernike_4_18_polynomials.mat' # TODO: may be updated
+output_dir_path: './results/sample_test/zernike_4_18_polymials_KernelGAN_SFTDFCAN' # TODO: may be updated
+
+img_max_val: 65535.0
+G_kernel_size: 33
+noise_scale: 40
+real_image: False
+gpu_id: 0
+max_iters: 1000
+n_filtering: 40
+do_ZSSR: false
+X4: false
+scale_factor: 0.5
+img_channel: 1
+input_crop_size: 64
+G_structure: [7, 7, 5, 5, 5, 3, 3, 3, 3, 1, 1, 1]
+G_chan: 64
+D_chan: 64
+D_kernel_size: 7
+D_n_layers: 7
+beta1: 0.5
+g_lr: 0.0002
+d_lr: 0.0002
+
+# for define name
+img_filter:
+    img_root: './BioDataset/Mixed'
+    structure_selected: [1, 2, 3]
+    included_idx: [1, 10]
+
+do_SFTMD: True
+SFTMD_model:
+  name: 'SFTDFCAN'
+  gpu: True
+  is_data_parallel: False
+  pca_mean: './data/pca_matrices_zernike/pca_mean.pth'
+  pca_matrix: './data/pca_matrices_zernike/pca_matrix65.pth'
+  norm_lr: False
+  norm_hr: False
+  network:
+    name: 'SFTDFCAN'
+    in_nc: 1
+    out_nc: 1
+    nf: 64
+    nb: 16
+    scale: 2
+    input_para: 65
+    min: 0.0
+    max: 1.0
+    init: ~
+  optimizer:
+    name: ~
+  scheduler:
+    name: ~
+  loss_function:
+    name: ~
+  checkpoint:
+    network: './experiments/SFTDFCAN-0829-same-depth/900000_network.pth'
+    training_state: ~

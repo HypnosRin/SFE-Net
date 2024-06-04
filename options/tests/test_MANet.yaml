@@ -1,0 +1,115 @@
+testing:
+  save_img: True # TODO: may be updated
+  save_mat: True # TODO: may be updated
+  save_dir: './results/sample_test/zernike_4_18_polymials_MANet_SFTDFCAN' # TODO: may be updated
+
+M_Model:
+  name: 'MANet'
+  gpu: True
+  is_data_parallel: False
+  times_1e4: False #
+  norm_lr: False
+  network:
+    name: 'MANet_s1'
+    in_nc: 1
+    scale: 2
+    kernel_size: 33
+    manet_nf: 128
+    manet_nb: 1
+    split: 2
+    init: ~
+  optimizer:
+    name: ~
+  scheduler:
+    name: ~
+  loss_function:
+    name: ~
+  checkpoint:
+#    network: './experiments/MANet-0614-4-6-poly/122000_network.pth' # TODO: may be updated
+#    network: './experiments/MANet-0609-4-8-poly/48000_network.pth' # TODO: may be updated
+#    network: './experiments/MANet-0609-4-13-poly/8000_network.pth' # TODO: may be updated
+    network: './experiments/MANet-0210-4-18-poly/390000_network.pth' # TODO: may be updated
+    training_state: ~
+
+F_Model:
+  name: 'SFTDFCAN'
+  gpu: True
+  is_data_parallel: False
+  pca_mean: './data/pca_matrices_zernike/pca_mean.pth'
+  pca_matrix: './data/pca_matrices_zernike/pca_matrix65.pth'
+  norm_lr: False
+  norm_hr: False
+  network:
+    name: 'SFTDFCAN'
+    in_nc: 1
+    out_nc: 1
+    nf: 64
+    nb: 16
+    scale: 2
+    input_para: 65
+    min: 0.0
+    max: 1.0
+    init: ~
+  optimizer:
+    name: ~
+  scheduler:
+    name: ~
+  loss_function:
+    name: ~
+  checkpoint:
+    network: './experiments/SFTDFCAN-0829-same-depth/900000_network.pth'
+    training_state: ~
+
+test_data:
+  name: 'HrLrKernelFromBioSR'
+  is_train: False
+#  preload_data: './data/test_loaders/zernike_4_6_polynomials.mat' # TODO: may be updated
+#  preload_data: './data/test_loaders/zernike_4_8_polynomials.mat' # TODO: may be updated
+#  preload_data: './data/test_loaders/zernike_4_13_polynomials.mat' # TODO: may be updated
+  preload_data: './data/test_loaders/zernike_4_18_polynomials.mat' # TODO: may be updated
+  gpu_id: ~
+  repeat: ~
+  img_filter:
+    img_root: './BioDataset/Mixed'
+    structure_selected: [1, 2, 3]
+    included_idx: [1, 10]
+  hr_crop:
+    mode: 'random'  # ~ for no aug #
+    center_pos: [-1, -1]
+    scan_shape: [-1, -1]
+    hr_size: [512, 512] #
+  scale: 2
+  img_signal: [1000]
+  psf_settings:
+    type: 'Zernike' # Gaussian | Zernike
+    kernel_size: 33
+
+    sigma: 2.6
+    sigma_min: 0.2
+    sigma_max: 4.0
+    prob_isotropic: 0.0
+    scale: 2
+
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+      idx_start: [4]
+      num_idx: [15]
+      mode: 'gaussian'
+      std: 0.125
+      bound: [1.0]
+  sup_phaseZ: 'all'  # all | [begin, end]
+  padding:
+      mode: 'circular'  # constant | reflect | replicate | circular
+      value: -1  # for constant mode
+  loader_settings:
+    batch_size: 1
+    shuffle: False
+    num_workers: 0
+    pin_memory: False
+    drop_last: False
