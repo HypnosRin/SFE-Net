@@ -18,11 +18,6 @@ This project use wandb to log training progress, please log in with your API key
 train SFE-Net on BioSR dataset    
 `python ./codes/trains/train_SFENet.py --opt ./options/trains/train_SFENet.yaml`
 ***
-run pre-trained SFE-Net to check performance on timeline data with aberration introduced  
-`python ./codes/tests/test_SFENet_exp.py --opt ./options/tests/test_SFENet_exp_CCPs.yaml`  
-`python ./codes/tests/test_SFENet_exp.py --opt ./options/tests/test_SFENet_exp_ER.yaml`  
-`python ./codes/tests/test_SFENet_exp.py --opt ./options/tests/test_SFENet_exp_MTs.yaml`
-***
 run pre-trained SFE-Net to check performance on validation BioSR data  
 `python ./codes/tests/test_SFENet.py --opt ./options/tests/test_SFENet.yaml`    
 
