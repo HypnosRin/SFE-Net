@@ -1,1 +1,0 @@
-./experiments/FFTRCANResUNet-0130/116000_network.pth filter=lfs diff=lfs merge=lfs -text
