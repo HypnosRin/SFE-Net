@@ -1,0 +1,148 @@
+project_name: FFTRCANResUNet
+experiment_name: FFTRCANResUNet-0130
+training:
+  max_epochs: 10000
+  validation_freq: 1000
+  checkpoint_freq: 4000
+  wandb_id: dju76ht3
+model:
+  name: UNetBased
+  gpu: true
+  is_data_parallel: false
+  norm_lr: true
+  norm_k: true
+  network:
+    name: FFTRCANResUNet
+    in_channels: 1
+    encoder_channels: 128
+    num_rg: 2
+    num_rcab: 4
+    reduction: 16
+    num_down_up: 5
+    num_pixel_stack_layer: 2
+    out_channels: 1
+    init:
+  optimizer:
+    name: Adam
+    lr: 0.0002
+    weight_decay: 1e-08
+  scheduler:
+    name: ReduceLROnPlateau
+    factor: 0.5
+    patience: 2
+    min_lr: 2e-06
+    step_interval: 2000
+  loss_function:
+    name: MSE
+  checkpoint:
+    network: ./experiments/FFTRCANResUNet-1118/145000_network.pth
+    training_state:
+train_data:
+  name: HrLrKernelFromBioSR
+  is_train: true
+  gpu_id:
+  repeat:
+  img_filter:
+    img_root: ../BioDataset/Mixed
+    structure_selected:
+    - 1
+    - 2
+    - 3
+    - 4
+    included_idx:
+    - 11
+    - 100
+  hr_crop:
+    mode: random
+    center_pos:
+    - -1
+    - -1
+    scan_shape:
+    - -1
+    - -1
+    hr_size:
+    - 264
+    - 264
+  scale: 2
+  img_signal:
+  - 100
+  - 1000
+  psf_settings:
+    kernel_size: 33
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+      idx_start: 4
+      num_idx: 15
+      mode: gaussian
+      std: 0.125
+      bound: 1.0
+  sup_phaseZ: all
+  padding:
+    mode: circular
+    value: -1
+  loader_settings:
+    batch_size: 4
+    shuffle: true
+    num_workers: 4
+    pin_memory: false
+    drop_last: true
+test_data:
+  name: HrLrKernelFromBioSR
+  is_train: false
+  gpu_id:
+  repeat:
+  img_filter:
+    img_root: ../BioDataset/Mixed
+    structure_selected:
+    - 1
+    - 2
+    - 3
+    - 4
+    included_idx:
+    - 1
+    - 10
+  hr_crop:
+    mode: random
+    center_pos:
+    - -1
+    - -1
+    scan_shape:
+    - -1
+    - -1
+    hr_size:
+    - 264
+    - 264
+  scale: 2
+  img_signal:
+  - 1000
+  psf_settings:
+    kernel_size: 33
+    NA: 1.35
+    Lambda: 0.525
+    RefractiveIndex: 1.33
+    SigmaX: 2.0
+    SigmaY: 2.0
+    Pixelsize: 0.0313
+    nMed: 1.33
+    phaseZ:
+      idx_start: 4
+      num_idx: 15
+      mode: gaussian
+      std: 0.125
+      bound: 1.0
+  sup_phaseZ: all
+  padding:
+    mode: circular
+    value: -1
+  loader_settings:
+    batch_size: 1
+    shuffle: false
+    num_workers: 0
+    pin_memory: false
+    drop_last: false
