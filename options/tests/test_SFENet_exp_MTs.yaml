@@ -38,8 +38,7 @@ U_Model:
   loss_function:
     name: ~
   checkpoint:
-#    network: './experiments/FFTRCANResUNet-0625-3s-u0.3-8s-u0.5-zernike/32000_network.pth'
-    network: 'experiments/FFTRCANResUNet-1205-exp-coma-backup/1100000_network.pth'
+    network: './experiments/FFTRCANResUNet-0625-3s-u0.3-8s-u0.5-zernike/32000_network.pth'
     training_state: ~
 
 F_Model:
@@ -68,6 +67,5 @@ F_Model:
   loss_function:
     name: ~
   checkpoint:
-#    network: './experiments/SFTDFCAN-0909-same-depth-exp-MTs/672000_network.pth'
-    network: './experiments/SFTDFCAN-1205-exp-coma-MTs-backup/948000_network.pth'
+    network: './experiments/SFTDFCAN-0909-same-depth-exp-MTs/672000_network.pth'
     training_state: ~

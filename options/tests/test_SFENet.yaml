@@ -1,14 +1,14 @@
 testing:
   save_img: True # TODO: may be updated
   save_mat: True # TODO: may be updated
-  save_dir: './results_test_version/zernike_3_6_7_polymials_SFENet_expCCPs_SFTDFCAN' # TODO: may be updated
+  save_dir: './results/zernike_3_6_7_polymials_SFENet_expCCPs_SFTDFCAN' # TODO: may be updated
 
 U_Model:
   name: 'UNetBased'
   gpu: True
   is_data_parallel: False
   norm_lr: True
-  norm_k: True
+#  norm_k: True
   network:
     name: 'FFTRCANResUNet'
     fft_forward: False
@@ -33,9 +33,6 @@ U_Model:
     name: ~
   checkpoint:   # TODO: may be updated
     network: './experiments/FFTRCANResUNet-0130/116000_network.pth'
-#    network: './experiments/FFTRCANResUNet-1205-exp-coma-backup/370000_network.pth'
-#    network: 'experiments/FFTRCANResUNet-1205-exp-coma-backup/1100000_network.pth'
-#    network: 'experiments/FFTRCANResUNet-1209-exp-coma/790000_network.pth'
     training_state: ~
 
 F_Model:
@@ -65,10 +62,6 @@ F_Model:
     name: ~
   checkpoint:
     network: './experiments/SFTDFCAN-0829-same-depth/900000_network.pth' # TODO: may be updated
-#    network: './experiments/SFTDFCAN-1205-exp-coma-MTs-backup/948000_network.pth'
-#    network: 'experiments/SFTDFCAN-1206-exp-coma-MTs-restart/284000_network.pth' #worse
-#    network: 'experiments/SFTDFCAN-1205-exp-coma-CCPs-backup/968000_network.pth'#环结构过多不自然
-#    network: 'experiments/SFTDFCAN-1209-exp-coma-CCPs-1/912000_network.pth' #PSNR worse 环结构更少
     training_state: ~
 
 test_data:
@@ -77,8 +70,7 @@ test_data:
 #  preload_data: './data/test_loaders/zernike_4_6_polynomials.mat' # TODO: may be updated
 #  preload_data: './data/test_loaders/zernike_4_8_polynomials.mat' # TODO: may be updated
 #  preload_data: './data/test_loaders/zernike_4_13_polynomials.mat' # TODO: may be updated
-#  preload_data: './data/test_loaders/zernike_4_18_polynomials.mat' # TODO: may be updated
-  preload_data: './data/test_loaders_test_version/zernike-3-6-7s.mat' # TODO: may be updated
+  preload_data: './data/test_loaders/zernike_4_18_polynomials.mat' # TODO: may be updated
   gpu_id: ~
   repeat: 3
   img_filter:

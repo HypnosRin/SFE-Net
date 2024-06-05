@@ -6,9 +6,7 @@ testing:
     kernel: True
     sr_kernel: False
   save_mat: True # TODO: may be updated
-#  save_dir: './results/SFTDFCAN_SFENet_sample_test_CCPs_Exp1_Defocus_20230221_093341' # TODO: may be updated
-#  save_dir: './results_test_version/SFTDFCAN_67_SFENet_U_367_sample_test_CCPs_Exp5_CCPs_006' # TODO: may be updated
-  save_dir: './results_test_version/SFTDFCAN_s3_67_SFENet_s3_67_sample_test_CCPs_Exp5_CCPs_006' # TODO: may be updated
+  save_dir: './results/SFTDFCAN_s3_67_SFENet_s3_67_sample_test_CCPs_Exp5_CCPs_006' # TODO: may be updated
 
 U_Model:
   name: 'UNetBased'
